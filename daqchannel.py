@@ -10,9 +10,8 @@ class DAQChannelBitrateTooHigh(Exception):
     pass
 
 class DAQChannel(object):
-    def __init__(self, name, channum, model, datatype=4,
-                 enabled=False, acquire=False, datarate=65536,
-                 ):
+    def __init__(self, name, channum, model=None, datatype=4,
+                 enabled=False, acquire=False, datarate=65536):
         self._name = name
         self._channum = int(channum)
         self._model = model
@@ -47,22 +46,10 @@ class DAQChannel(object):
         datarate = int(datarate)
         if self._model and (datarate > self._model.datarate):
             raise DAQChannelBitrateTooHigh
-        pwr = math.sqrt(datarate)
         if datarate and not (datarate & (datarate-1)):
             self._datarate = datarate
         else:
             raise DAQChannelBitrateMustBePowerOf2
-
-    # enabled: makes this channel visible to NDS, r/w
-    @property
-    def enabled(self):
-        return self._enabled == 1
-    @enabled.setter
-    def enabled(self, value):
-        if value:
-            self._enabled = 1
-        else:
-            self._enabled = 0
 
     # acquire: activates recording of the channel, r/w
     @property
@@ -77,8 +64,9 @@ class DAQChannel(object):
 
     # ===== METHODS =====
     
-    def to_ini(self):
-        raise NotImplementedError
+    def to_ini(self, ini):
+        cmt = '' if self.enabled else '#'
+        ini.write('{cmt}[{c.name}]\n{cmt}acquire={c._acquire}\n{cmt}datarate={c.datarate}\n{cmt}datatype={c.datatype}\n{cmt}chnnum={c.channum}\n'.format(cmt=cmt, c=self))
 
     @staticmethod
     def from_ini(model, ini):
@@ -106,7 +94,7 @@ class DAQChannel(object):
 
 
 def extract_name(data):
-    return re.search('.*\[G2:(.*)\]', data, re.MULTILINE).group(1)
+    return re.search('.*\[(G2:.*)\]', data, re.MULTILINE).group(1)
 
 def extract_channum(data):
     return int(re.search('.*chnnum=(\d*)', data, re.MULTILINE).group(1))

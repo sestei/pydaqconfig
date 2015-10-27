@@ -32,6 +32,12 @@ class DAQModel(object):
                 return int(m.group(1))
         return -1
 
+    def to_ini(self, ini):
+        for line in self._header:
+            ini.write(line)
+        for chan in self.channels:
+            chan.to_ini(ini)
+        
     @staticmethod
     def from_ini(name, ini):
         header = []

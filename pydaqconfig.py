@@ -17,3 +17,6 @@ if __name__ == '__main__':
     
     for chan in dm.channels:
         print "{c.name}: {c.datarate}Hz, enabled={c.enabled}, acquire={c.acquire}".format(c=chan)
+
+    with open('out.ini', 'wb') as ini:
+        dm.to_ini(ini)
