@@ -48,7 +48,7 @@ class DAQChannel(object):
         if self._model and (datarate > self._model.datarate):
             raise DAQChannelBitrateTooHigh
         pwr = math.sqrt(datarate)
-        if pwr % 1 == 0:
+        if datarate and not (datarate & (datarate-1)):
             self._datarate = datarate
         else:
             raise DAQChannelBitrateMustBePowerOf2
