@@ -1,22 +1,10 @@
 #!/usr/bin/env python
 import sys
-import os
+from ui.mainwindow import MainWindow
+from PyQt4 import QtGui
 
-def get_model_name(filename):
-    return os.path.splitext(os.path.basename(filename))[0]
+qApp = QtGui.QApplication(sys.argv)
 
-if __name__ == '__main__':
-    import daqmodel
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]
-    else:
-        filename = 'examples/G2SSM.ini'
-
-    with open(filename) as ini:
-        dm = daqmodel.DAQModel.from_ini(get_model_name(filename), ini)
-    
-    for chan in dm.channels:
-        print "{c.name}: {c.datarate}Hz, enabled={c.enabled}, acquire={c.acquire}".format(c=chan)
-
-    with open('out.ini', 'wb') as ini:
-        dm.to_ini(ini)
+window = MainWindow()
+window.show()
+qApp.exec_()

@@ -62,6 +62,18 @@ class DAQChannel(object):
         else:
             self._acquire = 0
 
+    # enabled: makes channel visible, r/w
+    @property
+    def enabled(self):
+        return self._enabled == 1
+    @enabled.setter
+    def enabled(self, value):
+        if value:
+            self._enabled = 1
+        else:
+            self._enabled = 0
+            self.acquire = False
+
     # ===== METHODS =====
     
     def to_ini(self, ini):

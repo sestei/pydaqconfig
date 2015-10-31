@@ -1,6 +1,7 @@
 #/usr/bin/env python
 import re
 import daqchannel
+import utils
 
 class DAQModel(object):
     def __init__(self, name, channels, header):
@@ -37,7 +38,7 @@ class DAQModel(object):
             ini.write(line)
         for chan in self.channels:
             chan.to_ini(ini)
-        
+
     @staticmethod
     def from_ini(name, ini):
         header = []
@@ -66,3 +67,19 @@ class DAQModel(object):
         return model
 
 
+if __name__ == '__main__':
+    import sys
+    import os
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+    else:
+        filename = 'examples/G2SSM.ini'
+
+    with open(filename) as ini:
+        dm = DAQModel.from_ini(utils.get_model_name(filename), ini)
+    
+    for chan in dm.channels:
+        print "{c.name}: {c.datarate}Hz, enabled={c.enabled}, acquire={c.acquire}".format(c=chan)
+
+    with open('out.ini', 'wb') as ini:
+        dm.to_ini(ini)
