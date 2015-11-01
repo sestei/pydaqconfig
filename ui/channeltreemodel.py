@@ -31,6 +31,8 @@ class ChannelNode(TreeNode):
         elif role == Qt.EditRole:
             if column == 2:
                 return self.channel.datarate
+        elif role == Qt.SizeHintRole and column==2:
+            return QSize(50,24)
         return None
 
     def setData(self, column, value, role):
