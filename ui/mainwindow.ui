@@ -61,7 +61,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="stbStatus"/>
   <action name="actionSave">
    <property name="text">
     <string>Save</string>

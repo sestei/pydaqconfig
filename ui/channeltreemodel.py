@@ -8,6 +8,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from treemodel import TreeNode, TreeModel
+from daq.daqchannel import DAQChannelBitrateTooHigh
 
 class ChannelNode(TreeNode):
     def __init__(self, channel, parent, row):
@@ -27,6 +28,9 @@ class ChannelNode(TreeNode):
                 return Qt.Checked if self.channel.enabled else Qt.Unchecked
             elif column == 1:
                 return Qt.Checked if self.channel.acquire else Qt.Unchecked
+        elif role == Qt.EditRole:
+            if column == 2:
+                return self.channel.datarate
         return None
 
     def setData(self, column, value, role):
@@ -38,6 +42,16 @@ class ChannelNode(TreeNode):
             elif column == 1:
                 self.channel.acquire = val
                 return True
+        elif role == Qt.EditRole:
+            if column == 2:
+                try:
+                    self.channel.datarate = value
+                    return True
+                except DAQChannelBitrateTooHigh as e:
+                    self.channel.datarate = e.maxdatarate
+                    QMessageBox.critical(None, 'Data Rate Too High',
+                        'This model has a maximum data rate of {0} samples/sec.'.format(e.maxdatarate))
+                    return True
         return False
 
     def _getChildren(self):
@@ -67,6 +81,16 @@ class ChannelTreeModel(TreeModel):
         self.columns = ['Name', 'Acquire', 'Datarate']
         super(ChannelTreeModel, self).__init__(parent)
 
+    def empty(self):
+        self.models = []
+        self.reset()
+
+    def populate(self, models):
+        #self.beginInsertRows(QModelIndex(), 0, len(models)-1)
+        self.models = models
+        #self.endInsertRows()
+        self.reset()
+
     def _getRootNodes(self):
         return [ModelNode(model, None, index)
             for index, model in enumerate(self.models)]
@@ -86,11 +110,11 @@ class ChannelTreeModel(TreeModel):
                     return default | Qt.ItemIsEnabled
                 else:
                     return default
-            else:
-                return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            elif index.column() == 2:
+                return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return None
         node = index.internalPointer()
@@ -101,7 +125,7 @@ class ChannelTreeModel(TreeModel):
             return self.columns[section]
         return None
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():
             return False
         node = index.internalPointer()
@@ -111,3 +135,28 @@ class ChannelTreeModel(TreeModel):
             self.dataChanged.emit(left, right)
             return True
         return False  
+
+class ComboDelegate(QItemDelegate):
+    def __init__(self, values, parent):
+        super(ComboDelegate, self).__init__(parent)
+        self.keys, self.values = zip(*values)
+        
+    def createEditor(self, parent, option, index):
+        combo = QComboBox(parent)
+        combo.addItems(self.keys)
+        combo.currentIndexChanged.connect(self.currentIndexChanged)
+        return combo
+        
+    def setEditorData(self, editor, index):
+        editor.blockSignals(True)
+        data = index.model().data(index, Qt.EditRole)
+        editor.setCurrentIndex(self.values.index(data))
+        editor.blockSignals(False)
+        
+    def setModelData(self, editor, model, index):
+        data = self.values[self.keys.index(str(editor.currentText()))]
+        model.setData(index, data)
+        
+    @pyqtSlot()
+    def currentIndexChanged(self):
+        self.commitData.emit(self.sender())

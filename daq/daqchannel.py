@@ -7,7 +7,9 @@ class DAQChannelBitrateMustBePowerOf2(Exception):
     pass
 
 class DAQChannelBitrateTooHigh(Exception):
-    pass
+    def __init__(self, maxdatarate, *args):
+        self.maxdatarate = maxdatarate
+        super(DAQChannelBitrateTooHigh, self).__init__(*args)
 
 class DAQChannel(object):
     def __init__(self, name, channum, model=None, datatype=4,
@@ -45,7 +47,7 @@ class DAQChannel(object):
     def datarate(self, datarate):
         datarate = int(datarate)
         if self._model and (datarate > self._model.datarate):
-            raise DAQChannelBitrateTooHigh
+            raise DAQChannelBitrateTooHigh(self._model.datarate)
         if datarate and not (datarate & (datarate-1)):
             self._datarate = datarate
         else:
