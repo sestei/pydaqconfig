@@ -38,12 +38,16 @@ class MainWindow(QMainWindow):
             cmd = str(env.value(self.ENV_POST_SAVE_CMD))
             #TODO: maybe use check_output() and then display a log window
             try:
-                subprocess.call([cmd]+updated_files)
+                subprocess.check_call([cmd]+updated_files)
                 print 'done.'
-            except Exception as e:
-                print e
+            except subprocess.CalledProcessError as e:
+                QMessageBox.warning(self, 'Error in post-save command',
+                    'There has been an error while executing the post-save command. The returned error code was {0}. Please check the output in the command-line terminal to see what went wrong.'.format(e.returncode))
+                return False
         else:
             print 'none set.'
+
+        return True
 
     def get_ini_directory(self):
         models = []
@@ -77,7 +81,7 @@ class MainWindow(QMainWindow):
         self._models_changed = dict([(m.name, False) for m in self._models])
         self.twChannels.model().populate(self._models)
 
-        self.update_title()
+        self.update_save_state()
         self.set_statusbar_timestamp()
 
     def save_model(self, model):
@@ -100,9 +104,11 @@ class MainWindow(QMainWindow):
         now = time.strftime('%d/%m/%Y at %H:%M:%S UTC', time.gmtime())
         self.stbStatus.showMessage('Channels loaded on {0}.'.format(now))
     
-    def update_title(self):
+    def update_save_state(self):
         title = 'pyDAQConfig'
-        if self.has_changes():
+        changed = self.has_changes()
+        self.btnSave.setEnabled(changed)
+        if changed:
             title += ' (edited)'
         self.setWindowTitle(title)
     
@@ -115,7 +121,7 @@ class MainWindow(QMainWindow):
     def data_changed(self, left, right):
         model = str(left.parent().data().toString())
         self._models_changed[model] = True
-        self.update_title()
+        self.update_save_state()
 
     @pyqtSlot()
     def on_btnReload_clicked(self):
@@ -134,7 +140,9 @@ class MainWindow(QMainWindow):
                 updated_files.append(self.save_model(model))
                 self._models_changed[model.name] = False
         if updated_files:
-            self.launch_post_save_cmd(updated_files)
-            self.update_title()
+            if self.launch_post_save_cmd(updated_files):
+                QMessageBox.information(self, 'DAQ Channels Saved',
+                    'The DAQ channel files have been saved successfully.')
+            self.update_save_state()
             self.set_statusbar_timestamp()
 

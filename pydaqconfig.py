@@ -7,4 +7,5 @@ qApp = QtGui.QApplication(sys.argv)
 
 window = MainWindow()
 window.show()
+window.raise_()
 qApp.exec_()
