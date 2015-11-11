@@ -3,6 +3,9 @@
 import math
 import re
 
+class DAQChannelDatatypeInvalid(Exception):
+    pass
+
 class DAQChannelBitrateMustBePowerOf2(Exception):
     pass
 
@@ -12,6 +15,13 @@ class DAQChannelBitrateTooHigh(Exception):
         super(DAQChannelBitrateTooHigh, self).__init__(*args)
 
 class DAQChannel(object):
+    # CDS data types in bytes
+    TYPEBYTES = {
+        1: 4, # int
+        2: 4, # float
+        4: 2, # short
+    }
+  
     def __init__(self, name, channum, model=None, datatype=4,
                  enabled=False, acquire=False, datarate=65536):
         self._name = name
@@ -20,7 +30,7 @@ class DAQChannel(object):
         self.enabled = enabled
         self.acquire = acquire
         self.datarate = datarate
-        self._datatype = datatype
+        self.datatype = datatype
 
     # ===== PROPERTIES =====
 
@@ -34,10 +44,16 @@ class DAQChannel(object):
     def channum(self):
         return self._channum
 
-    # datatype: the datatype (generally 4), read only
+    # datatype: the datatype (generally 4), r/w
     @property
     def datatype(self):
         return self._datatype
+    @datatype.setter
+    def datatype(self, datatype):
+        if datatype not in self.TYPEBYTES.keys():
+            raise DAQChannelDatatypeInvalid()
+        
+        self._datatype = datatype
 
     # datarate: daq datarate for this channel, r/w
     @property
@@ -77,6 +93,9 @@ class DAQChannel(object):
             self.acquire = False
 
     # ===== METHODS =====
+    
+    def get_bytes_per_second(self):
+        return self.TYPEBYTES[self.datatype] * self.datarate * self.acquire
     
     def to_ini(self, ini):
         cmt = '' if self.enabled else '#'
