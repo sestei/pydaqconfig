@@ -3,7 +3,7 @@ pyDAQConfig
 
 A Python package and GUI for activating DAQ channels in the Glasgow CDS system.
 
-<img src="./doc/mainwindow.png" width="800" />
+<img src="./doc/mainwindow.png" width="700" />
 
 ### Objectives
 
@@ -36,7 +36,7 @@ and sets them to acquire data. Clicking _Deactivate_ turns of data acquisition,
 however it leaves the channel enabled so that data can be retrieved via e.g.
 _ligoDV_.
 
-<img src="./doc/channelsets.png" width="350" />
+<img src="./doc/channelsets.png" width="400" />
 
 Copyright
 ---------
