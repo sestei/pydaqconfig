@@ -18,7 +18,7 @@ class ChannelNode(TreeNode):
     def data(self, column, role):
         if role == Qt.DisplayRole:
             if column == 0:
-                return self.channel.name
+                return self.channel.short_name
             elif column == 1:
                 return None
             elif column == 2:

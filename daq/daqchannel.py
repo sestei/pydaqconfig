@@ -25,6 +25,7 @@ class DAQChannel(object):
     def __init__(self, name, channum, model=None, datatype=4,
                  enabled=False, acquire=False, datarate=65536):
         self._name = name
+        self._short_name = name[name.find('-')+1:]
         self._channum = int(channum)
         self._model = model
         self.enabled = enabled
@@ -38,6 +39,11 @@ class DAQChannel(object):
     @property
     def name(self):
         return self._name
+
+    # short_name: the DAQ channel name without IFO and model prefix, read only
+    @property
+    def short_name(self):
+        return self._short_name
 
     # channum: the DAQ channel number, read only
     @property
