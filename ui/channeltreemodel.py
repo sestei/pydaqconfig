@@ -88,10 +88,11 @@ class ChannelTreeModel(TreeModel):
         self.reset()
 
     def populate(self, models):
-        #self.beginInsertRows(QModelIndex(), 0, len(models)-1)
         self.models = models
-        #self.endInsertRows()
         self.reset()
+
+    def signal_update(self):
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def _getRootNodes(self):
         return [ModelNode(model, None, index)

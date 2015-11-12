@@ -9,6 +9,7 @@ import subprocess
 
 from daq import daqmodel, utils
 from channeltreemodel import ChannelTreeModel, ComboDelegate
+import channelsets
 
 class MainWindow(QMainWindow):
     ENV_CDS_DAQ_CHANS = 'PYDAQCONFIG_CHAN_DIR'
@@ -26,7 +27,7 @@ class MainWindow(QMainWindow):
         self.twChannels.expanded.connect(self.resize_columns)
         self.load_models()
 
-        datarates = [2**n for n in range(1,17)]
+        datarates = [2**n for n in range(4,17)]
         d_datarates = zip(map(str, datarates), datarates)
         self.twChannels.setItemDelegateForColumn(2, ComboDelegate(d_datarates, self.twChannels))
         self.twChannels.model().dataChanged.connect(self.data_changed)
@@ -70,10 +71,11 @@ class MainWindow(QMainWindow):
         else:
             for fn in glob.glob(directory+'/*.ini'):
                 print 'Loading {0}...'.format(fn)
-                ini = open(fn, 'rb')
-                dm = daqmodel.DAQModel.from_ini(utils.get_model_name(fn), ini)
-                if dm:
-                    models.append(dm)
+                with open(fn, 'rb') as ini:
+                    dm = daqmodel.DAQModel.from_ini(
+                            utils.get_filename_without_ext(fn), ini)
+                    if dm:
+                        models.append(dm)
         return models
 
     def load_models(self):
@@ -106,6 +108,15 @@ class MainWindow(QMainWindow):
             if chan:
                 return chan
         return None
+
+    def set_channels(self, chans, active):
+        for chan in chans:
+            c = self.find_channel(chan)
+            if c:
+                c.enabled = True # always enable channel to be able to retrieve data
+                c.acquire = active
+                print "Updated {0}".format(c.name)
+        self.twChannels.model().signal_update()
 
     def set_statusbar_timestamp(self):
         now = time.strftime('%d/%m/%Y at %H:%M:%S UTC', time.gmtime())
@@ -155,9 +166,10 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_btnChannelSets_clicked(self):
-        dlg = ChannelSetsDialog(self)
-        if dlg.exec_() == QDialog.Accepted:
-            print "accepted"
-        else:
-            print "rejected"
+        dlg = channelsets.ChannelSetsDialog(self, self.get_ini_directory())
+        ret = dlg.exec_()
+        if ret == channelsets.CHANSET_ACTIVATE:
+            self.set_channels(dlg.get_channel_set(), True)
+        elif ret == channelsets.CHANSET_DEACTIVATE:
+            self.set_channels(dlg.get_channel_set(), False)
 
