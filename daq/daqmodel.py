@@ -42,6 +42,12 @@ class DAQModel(object):
         
         return byterate
 
+    def find_channel(self, name):
+        for chan in self._channels:
+            if chan.name == name:
+                return chan
+        return None
+
     def to_ini(self, ini):
         for line in self._header:
             ini.write(line)
@@ -89,6 +95,9 @@ if __name__ == '__main__':
     
     for chan in dm.channels:
         print "{c.name}: {c.datarate}Hz, enabled={c.enabled}, acquire={c.acquire}".format(c=chan)
+
+    chan = dm.find_channel('G2:SSM-AUXSUS_LEFT_EXC_DQ')
+    print chan.name
 
     with open('out.ini', 'wb') as ini:
         dm.to_ini(ini)

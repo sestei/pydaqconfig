@@ -100,6 +100,13 @@ class MainWindow(QMainWindow):
     def has_changes(self):
         return any(self._models_changed.itervalues())
 
+    def find_channel(self, name):
+        for model in self._models:
+            chan = model.find_channel(name)
+            if chan:
+                return chan
+        return None
+
     def set_statusbar_timestamp(self):
         now = time.strftime('%d/%m/%Y at %H:%M:%S UTC', time.gmtime())
         self.stbStatus.showMessage('Channels loaded on {0}.'.format(now))
@@ -145,4 +152,12 @@ class MainWindow(QMainWindow):
                     'The DAQ channel files have been saved successfully.')
             self.update_save_state()
             self.set_statusbar_timestamp()
+
+    @pyqtSlot()
+    def on_btnChannelSets_clicked(self):
+        dlg = ChannelSetsDialog(self)
+        if dlg.exec_() == QDialog.Accepted:
+            print "accepted"
+        else:
+            print "rejected"
 
