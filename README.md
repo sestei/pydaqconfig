@@ -36,6 +36,8 @@ and sets them to acquire data. Clicking _Deactivate_ turns of data acquisition,
 however it leaves the channel enabled so that data can be retrieved via e.g.
 _ligoDV_.
 
+<img src="./doc/channelsets.png" width="350" />
+
 Copyright
 ---------
 This work is licensed under the Creative Commons Attribution-NonCommercial-
