@@ -113,8 +113,10 @@ class MainWindow(QMainWindow):
     def has_changes(self):
         return any(self._models_changed.itervalues())
 
-    def find_channel(self, name):
+    def find_channel(self, name, skip_archived=True):
         for model in self._models:
+            if model.archived and skip_archived:
+                continue
             chan = model.find_channel(name)
             if chan:
                 return chan
@@ -126,14 +128,23 @@ class MainWindow(QMainWindow):
             if c:
                 c.enabled = True # always enable channel to be able to retrieve data
                 c.acquire = active
+                self._models_changed[c.modelname] = True
                 print "Updated {0}".format(c.name)
         self.twChannels.model().signal_update()
 
+    def get_modelname_for_index(self, idx):
+        if idx.parent().isValid():
+            idx = idx.parent()
+        if idx.column() > 0:
+            idx = idx.sibling(idx.row(), 0)
+        try:
+            return idx.internalPointer().model.name
+        except AttributeError:
+            return None
+    
     def get_current_modelname(self):
-        mdl = self.twChannels.currentIndex()
-        if mdl.parent().isValid():
-            mdl = mdl.parent()
-        return str(mdl.data().toString())
+        idx = self.twChannels.currentIndex()
+        return self.get_modelname_for_index(idx)
     
     def set_statusbar_timestamp(self):
         now = time.strftime('%d/%m/%Y at %H:%M:%S UTC', time.gmtime())
@@ -154,8 +165,9 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(QModelIndex, QModelIndex)
     def data_changed(self, left, right):
-        model = str(left.parent().data().toString())
-        self._models_changed[model] = True
+        model = self.get_modelname_for_index(left)
+        if model:
+            self._models_changed[model] = True
         self.update_save_state()
 
     @pyqtSlot()
@@ -194,6 +206,8 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def on_btnArchive_clicked(self):
         model = self.get_current_modelname()
+        if not model:
+            return
         env = QProcessEnvironment.systemEnvironment()
         if not env.contains(self.ENV_SVN_DAQ_CHANS):
             QMessageBox.critical(self, 'Unable to access archive', 

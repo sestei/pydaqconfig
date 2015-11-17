@@ -7,6 +7,18 @@ import time
 def get_login(realm, username, may_save):
     return True, 'jifuser', 'LA5ER3urn', True
 
+def wait_cursor(fn):
+    def decorator(*args, **kwargs):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        retval = None
+        try:
+            retval = fn(*args, **kwargs)
+        finally:
+            QApplication.restoreOverrideCursor()
+        return retval
+    return decorator
+
+
 class ArchivedIni(object):
     def __init__(self, modelname, inifile, log):
         self._inifile = inifile
@@ -16,7 +28,7 @@ class ArchivedIni(object):
         self.date = time.ctime(log.date)
 
     def __str__(self):
-        return '{a.modelname} @ {a.date} [#{a.revision}]'.format(a=self)
+        return '{a.modelname} @ {a.date} [rev #{a.revision}]'.format(a=self)
 
     def contents(self):
         try:
@@ -34,10 +46,11 @@ class ArchiveDialog(QDialog):
         self._archive = []
         self._modelname = modelname
         
-        self.lblArchive.setText(self.lblArchive.text() + modelname)
+        self.lblArchive.setText(self.lblArchive.text() + modelname + ':')
         self.load_archive(inifile)
         self.update_list()
 
+    @wait_cursor
     def load_archive(self, inifile):
         try:
             import pysvn
@@ -56,6 +69,7 @@ class ArchiveDialog(QDialog):
         self.lstArchive.addItems([str(s) for s in self._archive])
         self.lstArchive.setCurrentRow(0)
 
+    @wait_cursor
     def get_archived_ini(self):
         row = self.lstArchive.currentRow()
         if row < 0 or not self.lstArchive.isEnabled():

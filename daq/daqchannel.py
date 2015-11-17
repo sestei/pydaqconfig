@@ -45,6 +45,10 @@ class DAQChannel(object):
     def short_name(self):
         return self._short_name
 
+    @property
+    def modelname(self):
+        return self._model.name
+
     # archived: returns True if this channel belongs to an archived file, read only
     @property
     def archived(self):

@@ -52,6 +52,9 @@ class DAQModel(object):
                 return chan
         return None
 
+    def __str__(self):
+        return self.name
+
     def to_ini(self, ini):
         for line in self._header:
             ini.write(line)
@@ -94,10 +97,13 @@ class ArchivedDAQModel(DAQModel):
     def archive_string(self):
         return self._archive_string
 
+    def __str__(self):
+        return self.archive_string
+
     @classmethod
     def from_ini(cls, archive, ini):
         model = super(ArchivedDAQModel, cls).from_ini(archive.modelname, ini)
-        model._archive_string = '{a.date} [#{a.revision}]'.format(a=archive)
+        model._archive_string = str(archive)
         return model
 
 

@@ -67,9 +67,9 @@ class ModelNode(TreeNode):
     def data(self, column, role):
         if role == Qt.DisplayRole:
             if column == 0:
-                return self.model.name
-            elif column == 1 and self.model.archived:
-                return self.model.archive_string
+                return str(self.model)
+            #elif column == 1 and self.model.archived:
+            #    return self.model.archive_string
         return None
 
     def setData(self, column, value, role):
