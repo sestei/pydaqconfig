@@ -3,9 +3,17 @@ from PyQt4.QtGui import *
 from PyQt4 import uic
 
 import time
+import os.path
+import daq.utils as utils
 
-def get_login(realm, username, may_save):
-    return True, 'jifuser', 'LA5ER3urn', True
+try:
+    import pysvn
+    HAS_PYSVN = True
+except ImportError:
+    HAS_PYSVN = False
+
+ENV_SVN_DAQ_CHANS = 'PYDAQCONFIG_SVN_CHAN_DIR'
+ENV_SVN_CREDENTIALS = 'PYDAQCONFIG_SVN_CREDENTIALS'
 
 def wait_cursor(fn):
     def decorator(*args, **kwargs):
@@ -18,6 +26,24 @@ def wait_cursor(fn):
         return retval
     return decorator
 
+def get_login(realm, username, may_save):
+    credentials = utils.get_env_variable(ENV_SVN_CREDENTIALS)
+    if not credentials:
+        QMessageBox.critical(parent, 'SVN Credentials not set', 
+            ('Please set the environmental variable {0} to '+
+            'the subversion login credentials (username:password).').format(
+                ENV_SVN_DAQ_CHANS))
+    user, passwd = credentials.split(':')
+    return True, user, passwd, True
+
+def get_svn_directory(parent = None):
+    svndir = utils.get_env_variable(ENV_SVN_DAQ_CHANS)
+    if not svndir:
+        QMessageBox.critical(parent, 'Unable to access archive', 
+            ('Please set the environmental variable {0} to '+
+            'the subversion directory which contains the DAQ .ini files.').format(
+                ENV_SVN_DAQ_CHANS))
+    return svndir
 
 class ArchivedIni(object):
     def __init__(self, modelname, inifile, log):
@@ -40,30 +66,37 @@ class ArchivedIni(object):
         return client.cat(self._inifile, revision=self._log.revision)
             
 class ArchiveDialog(QDialog):
-    def __init__(self, parent, inifile, modelname):
+    def __init__(self, parent, modelname):
         super(ArchiveDialog, self).__init__(parent)
         uic.loadUi('ui/archive.ui', self)
         self._archive = []
         self._modelname = modelname
         
         self.lblArchive.setText(self.lblArchive.text() + modelname + ':')
-        self.load_archive(inifile)
-        self.update_list()
+        if HAS_PYSVN:
+            self.load_archive()
+            self.update_list()
+        else:
+            self.set_no_archive()
+
+    def set_no_archive(self, e=None):
+        self.lstArchive.addItem('No archived versions available')
+        if e:
+            self.lstArchive.addItem(str(e))
+        self.lstArchive.setEnabled(False)
 
     @wait_cursor
-    def load_archive(self, inifile):
+    def load_archive(self):
         try:
-            import pysvn
-        except ImportError:
-            return
-
-        client = pysvn.Client()
-        try:
+            client = pysvn.Client()
+            client.callback_get_login = get_login
+            folder = get_svn_directory(self)
+            inifile = os.path.join(folder, self._modelname+'.ini')
+            client.update(inifile)
             for log in client.log(inifile):
                 self._archive.append(ArchivedIni(self._modelname, inifile, log))
-        except pysvn.ClientError, e:
-            self.lstArchive.addItem('No archived versions available')
-            self.lstArchive.setEnabled(False)
+        except pysvn.ClientError as e:
+            self.set_no_archive(e)
 
     def update_list(self):
         self.lstArchive.addItems([str(s) for s in self._archive])
