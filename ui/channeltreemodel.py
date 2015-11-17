@@ -65,10 +65,12 @@ class ModelNode(TreeNode):
         super(ModelNode, self).__init__(parent, row)
 
     def data(self, column, role):
-        if role == Qt.DisplayRole and column == 0:
-            return self.model.name
-        else:
-            return None
+        if role == Qt.DisplayRole:
+            if column == 0:
+                return self.model.name
+            elif column == 1 and self.model.archived:
+                return self.model.archive_string
+        return None
 
     def setData(self, column, value, role):
         return False
@@ -105,15 +107,19 @@ class ChannelTreeModel(TreeModel):
         if index.parent().isValid():
             node = index.internalPointer()
             enabled = node.channel.enabled
-            default = Qt.ItemIsSelectable | Qt.ItemIsUserCheckable
+            default = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            if not node.channel.archived:
+                default |= Qt.ItemIsUserCheckable 
             if index.column() == 0:
-                return default | Qt.ItemIsEnabled
+                return default
             elif index.column() == 1:
                 if enabled:
-                    return default | Qt.ItemIsEnabled
-                else:
                     return default
+                else:
+                    return (default & ~Qt.ItemIsEnabled)
             elif index.column() == 2:
+                if node.channel.archived:
+                    return Qt.ItemIsSelectable | Qt.ItemIsEnabled
                 return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled
 

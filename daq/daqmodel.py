@@ -13,6 +13,10 @@ class DAQModel(object):
     # ===== PROPERTIES =====
 
     @property
+    def archived(self):
+        return False
+
+    @property
     def name(self):
         return self._name
 
@@ -54,8 +58,8 @@ class DAQModel(object):
         for chan in self.channels:
             chan.to_ini(ini)
 
-    @staticmethod
-    def from_ini(name, ini):
+    @classmethod
+    def from_ini(cls, name, ini):
         header = []
         channels = []
 
@@ -70,7 +74,7 @@ class DAQModel(object):
                 break
             header.append(line)
 
-        model = DAQModel(name, [], header)
+        model = cls(name, [], header)
 
         while True:
             channel = daqchannel.DAQChannel.from_ini(model, ini)
@@ -79,6 +83,21 @@ class DAQModel(object):
 
         model._channels = channels
 
+        return model
+
+class ArchivedDAQModel(DAQModel):
+    @property
+    def archived(self):
+        return True
+
+    @property
+    def archive_string(self):
+        return self._archive_string
+
+    @classmethod
+    def from_ini(cls, archive, ini):
+        model = super(ArchivedDAQModel, cls).from_ini(archive.modelname, ini)
+        model._archive_string = '{a.date} [#{a.revision}]'.format(a=archive)
         return model
 
 

@@ -6,14 +6,22 @@ import os.path
 import shutil
 import time
 import subprocess
+import StringIO
+try:
+    import pysvn
+    HAS_PYSVN = True
+except ImportError:
+    HAS_PYSVN = False
 
 from daq import daqmodel, utils
 from channeltreemodel import ChannelTreeModel, ComboDelegate
 import channelsets
+import archive
 
 class MainWindow(QMainWindow):
     ENV_CDS_DAQ_CHANS = 'PYDAQCONFIG_CHAN_DIR'
     ENV_POST_SAVE_CMD = 'PYDAQCONFIG_POST_SAVE_CMD'
+    ENV_SVN_DAQ_CHANS = 'PYDAQCONFIG_SVN_CHAN_DIR'
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -31,6 +39,9 @@ class MainWindow(QMainWindow):
         d_datarates = zip(map(str, datarates), datarates)
         self.twChannels.setItemDelegateForColumn(2, ComboDelegate(d_datarates, self.twChannels))
         self.twChannels.model().dataChanged.connect(self.data_changed)
+
+        if HAS_PYSVN:
+            self.btnArchive.setEnabled(True)
 
     def launch_post_save_cmd(self, updated_files):
         env = QProcessEnvironment.systemEnvironment()
@@ -118,6 +129,12 @@ class MainWindow(QMainWindow):
                 print "Updated {0}".format(c.name)
         self.twChannels.model().signal_update()
 
+    def get_current_modelname(self):
+        mdl = self.twChannels.currentIndex()
+        if mdl.parent().isValid():
+            mdl = mdl.parent()
+        return str(mdl.data().toString())
+    
     def set_statusbar_timestamp(self):
         now = time.strftime('%d/%m/%Y at %H:%M:%S UTC', time.gmtime())
         self.stbStatus.showMessage('Channels loaded on {0}.'.format(now))
@@ -174,3 +191,23 @@ class MainWindow(QMainWindow):
         elif ret == channelsets.CHANSET_DEACTIVATE:
             self.set_channels(dlg.get_channel_set(), False)
 
+    @pyqtSlot()
+    def on_btnArchive_clicked(self):
+        model = self.get_current_modelname()
+        env = QProcessEnvironment.systemEnvironment()
+        if not env.contains(self.ENV_SVN_DAQ_CHANS):
+            QMessageBox.critical(self, 'Unable to access archive', 
+                ('Please set the environmental variable {0} to '+
+                'the subversion directory which contains the DAQ .ini files.').format(
+                    self.ENV_SVN_DAQ_CHANS))
+
+        directory = str(env.value(self.ENV_SVN_DAQ_CHANS))
+        inifile = os.path.join(directory, model+'.ini') 
+        dlg = archive.ArchiveDialog(self, inifile, model)
+        if dlg.exec_() == QDialog.Accepted:
+            ini = dlg.get_archived_ini()
+            if not ini: return
+
+            sfile = StringIO.StringIO(ini.contents())
+            self._models.append(daqmodel.ArchivedDAQModel.from_ini(ini, sfile))
+            self.twChannels.model().populate(self._models)
