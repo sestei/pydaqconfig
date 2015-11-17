@@ -147,8 +147,9 @@ class MainWindow(QMainWindow):
             retval = QMessageBox.question(self, 'Discard Changes?',
                 'You have unsaved changes. Do you want to discard them and reload the channels?',
                 QMessageBox.Yes | QMessageBox.No)
-            if retval == QMessageBox.Yes:
-                self.load_models()
+            if retval == QMessageBox.No:
+                return
+        self.load_models()
         
     @pyqtSlot()
     def on_btnSave_clicked(self):
