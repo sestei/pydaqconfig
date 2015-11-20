@@ -81,7 +81,8 @@ class ModelNode(TreeNode):
                 # show model max data rate
                 return str(self.model.datarate)
             elif column == 3:
-                return str("{0:.0f}".format(round(self.model.get_bytes_per_second() * 0.0823)))
+                # total model acquisition rate in MiB/h
+                return '{0:.1f}'.format(self.model.get_bytes_per_second() / 1048576.0 * 3600)
         return None
 
     def setData(self, column, value, role):
