@@ -50,9 +50,16 @@ class ArchivedIni(object):
         self._inifile = inifile
         self.modelname = modelname
         self._log = log
-        self.revision = log.revision.number
         self.date = time.ctime(log.date)
 
+    @property
+    def revision(self):
+        return self._log.revision.number
+
+    @property
+    def message(self):
+        return self._log.message
+    
     def __str__(self):
         return '{a.modelname} @ {a.date} [rev #{a.revision}]'.format(a=self)
 
@@ -99,7 +106,11 @@ class ArchiveDialog(QDialog):
             self.set_no_archive(e)
 
     def update_list(self):
-        self.lstArchive.addItems([str(s) for s in self._archive])
+        for a in self._archive:
+            item = QListWidgetItem()
+            item.setText(str(a))
+            item.setToolTip(a.message)
+            self.lstArchive.addItem(item)
         self.lstArchive.setCurrentRow(0)
 
     @wait_cursor

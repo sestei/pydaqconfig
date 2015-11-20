@@ -48,7 +48,10 @@ class MainWindow(QMainWindow):
                 print 'done.'
             except subprocess.CalledProcessError as e:
                 QMessageBox.warning(self, 'Error in post-save command',
-                    'There has been an error while executing the post-save command. The returned error code was {0}. Please check the output in the command-line terminal to see what went wrong.'.format(e.returncode))
+                    ('There has been an error while executing the post-save '
+                     'command. The returned error code was {0}. Please check '
+                     'the output in the command-line terminal to see what '
+                     'went wrong.').format(e.returncode))
                 return False
         else:
             print 'none set.'
@@ -152,6 +155,16 @@ class MainWindow(QMainWindow):
             title += ' (edited)'
         self.setWindowTitle(title)
     
+    def closeEvent(self, event):
+        if self.has_changes():
+            reply = QMessageBox.question(self, 'Unsaved Changes',
+                        'You have unsaved changes, do you really want to discard those and quit?',
+                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.No:
+                event.ignore()
+                return
+        event.accept()
+
     @pyqtSlot()
     def resize_columns(self):
         for col in range(self.twChannels.model().columnCount(None)):
@@ -173,7 +186,7 @@ class MainWindow(QMainWindow):
             if retval == QMessageBox.No:
                 return
         self.load_models()
-        
+
     @pyqtSlot()
     def on_btnSave_clicked(self):
         updated_files = []
