@@ -11,10 +11,17 @@ A Python package and GUI for activating DAQ channels in the Glasgow CDS system.
 - always keep a backup file 
 - allow a post-save command, which e.g. can commit the changed file to a repository
 - quick acquisition of multiple channels via channel sets
-- at some later point, allow browsing of old files/old versions in the repository, to re-enable those channels
+- allows browsing of old files/old versions in the repository
 
-Environment Variables
----------------------
+Prerequisites
+-------------
+
+* Python >= 2.7
+* PyQT 4
+* for archive browsing: pysvn (automatically disabled when this module is not available)
+
+Environmental Variables
+-----------------------
 
 The env variable `PYDAQCONFIG_CHAN_DIR` must be set to the directory which
 stores the DAQ `.ini` files.
@@ -22,6 +29,12 @@ stores the DAQ `.ini` files.
 The env variable `PYDAQCONFIG_POST_SAVE_CMD` can specify a command which will be
 run after saving the `.ini` files. The full path to the changed files will be
 given as command line arguments.
+
+To be able to browse the archive of old channel settings, two more environmental
+variables have to be set. `PYDAQCONFIG_SVN_CHAN_DIR` must be set to the full
+path to the DAQ `.ini` files in the locally checked out SVN repository.
+`PYDAQCONFIG_SVN_CREDENTIALS` must contain a `username:password` pair to be
+used with this SVN repository.
 
 Channel Sets
 ------------
