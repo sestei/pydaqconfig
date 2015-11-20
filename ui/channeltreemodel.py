@@ -77,6 +77,9 @@ class ModelNode(TreeNode):
                 return str(self.model)
             #elif column == 1 and self.model.archived:
             #    return self.model.archive_string
+            elif column == 2:
+                # show model max data rate
+                return str(self.model.datarate)
             elif column == 3:
                 return str("{0:.0f}".format(round(self.model.get_bytes_per_second() * 0.0823)))
         return None
