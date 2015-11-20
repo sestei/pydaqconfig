@@ -23,6 +23,8 @@ class ChannelNode(TreeNode):
                 return None
             elif column == 2:
                 return str(self.channel.datarate)
+            elif column == 3:
+                return str(self.channel.get_bytes_per_second() / 1024)
         elif role == Qt.CheckStateRole:
             if column == 0:
                 return Qt.Checked if self.channel.enabled else Qt.Unchecked
@@ -48,6 +50,10 @@ class ChannelNode(TreeNode):
             if column == 2:
                 try:
                     self.channel.datarate = value
+                    
+                    # update bytes per second
+                    self.data(3, Qt.DisplayRole)
+                    
                     return True
                 except DAQChannelBitrateTooHigh as e:
                     self.channel.datarate = e.maxdatarate
@@ -82,7 +88,7 @@ class ModelNode(TreeNode):
 class ChannelTreeModel(TreeModel):
     def __init__(self, models, parent=None):
         self.models = models
-        self.columns = ['Name', 'Acquire', 'Datarate']
+        self.columns = ['Name', 'Acquire', 'Samples/s', 'KiB/s']
         super(ChannelTreeModel, self).__init__(parent)
 
     def empty(self):
