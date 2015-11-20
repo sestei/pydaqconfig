@@ -24,8 +24,8 @@ class ChannelNode(TreeNode):
             elif column == 2:
                 return str(self.channel.datarate)
             elif column == 3:
-                # acquisition rate in MiB/day
-                return "{0:.0f}".format(round(self.channel.get_bytes_per_second() * 0.0823))
+                # acquisition rate in MiB/h
+                return '{0:.1f}'.format(self.channel.get_bytes_per_second() / 1048576.0 * 3600)
         elif role == Qt.CheckStateRole:
             if column == 0:
                 return Qt.Checked if self.channel.enabled else Qt.Unchecked
@@ -94,7 +94,7 @@ class ModelNode(TreeNode):
 class ChannelTreeModel(TreeModel):
     def __init__(self, models, parent=None):
         self.models = models
-        self.columns = ['Name', 'Acquire', 'Samples/s', 'MiB/d']
+        self.columns = ['Name', 'Acquire', 'Samples/s', 'MiB/h']
         super(ChannelTreeModel, self).__init__(parent)
 
     def empty(self):
