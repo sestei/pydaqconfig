@@ -110,7 +110,7 @@ class DAQChannel(object):
     # ===== METHODS =====
     
     def get_bytes_per_second(self):
-        return self.TYPEBYTES[self.datatype] * self.datarate * self.acquire
+        return self.TYPEBYTES[self.datatype] * self.datarate * self.acquire * self.enabled
     
     def to_ini(self, ini):
         cmt = '' if self.enabled else '#'

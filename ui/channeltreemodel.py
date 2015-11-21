@@ -24,6 +24,7 @@ class ChannelNode(TreeNode):
             elif column == 2:
                 return str(self.channel.datarate)
             elif column == 3:
+                # acquisition rate in MiB/h
                 return '{0:.1f}'.format(self.channel.get_bytes_per_second() / 1048576.0 * 3600)
         elif role == Qt.CheckStateRole:
             if column == 0:
@@ -51,7 +52,7 @@ class ChannelNode(TreeNode):
                 try:
                     self.channel.datarate = value
                     
-                    # update bytes per second
+                    # update acquisition rate
                     self.data(3, Qt.DisplayRole)
                     
                     return True
@@ -76,6 +77,12 @@ class ModelNode(TreeNode):
                 return str(self.model)
             #elif column == 1 and self.model.archived:
             #    return self.model.archive_string
+            elif column == 2:
+                # show model max data rate
+                return str(self.model.datarate)
+            elif column == 3:
+                # total model acquisition rate in MiB/h
+                return '{0:.1f}'.format(self.model.get_bytes_per_second() / 1048576.0 * 3600)
         return None
 
     def setData(self, column, value, role):
