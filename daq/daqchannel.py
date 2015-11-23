@@ -16,10 +16,15 @@ class DAQChannelBitrateTooHigh(Exception):
 
 class DAQChannel(object):
     # CDS data types in bytes
+    # from CDS source code function inline static int data_type_size (short dtype)
     TYPEBYTES = {
-        1: 4, # int
-        2: 4, # float
-        4: 2, # short
+        1: 2, # 16 bit int
+        2: 4, # 32 bit int
+        3: 8, # 64 bit int
+        4: 4, # 32 bit float
+        5: 8, # 64 bit double
+        6: 4*2, # 32 bit complex
+        7: 4 # 32 bit uint
     }
   
     def __init__(self, name, channum, model=None, datatype=4,
