@@ -17,11 +17,9 @@ def get_env_variable(variable):
 def get_md5_checksum(obj):
     if type(obj) is str:    # it's the name of a file
         content = open(obj, 'rb').read()
-    elif type(obj) is file: # file passed in
+    else:                   # file passed in
         idx = obj.tell()
         obj.seek(0)
         content = obj.read()
         obj.seek(idx)
-    else:
-        raise Exception('Unknown object, expected file name or file object.')
     return hashlib.md5(content).hexdigest()
