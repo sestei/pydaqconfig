@@ -4,10 +4,11 @@ import daqchannel
 import utils
 
 class DAQModel(object):
-    def __init__(self, name, channels, header):
+    def __init__(self, name, channels, header, checksum):
         self._name = name
         self._channels = channels
         self._header = header
+        self._checksum = checksum
         self._datarate = self.get_datarate_from_header()
 
     # ===== PROPERTIES =====
@@ -27,6 +28,13 @@ class DAQModel(object):
     @property
     def channels(self):
         return self._channels
+
+    @property
+    def checksum(self):
+        return self._checksum
+    @checksum.setter
+    def checksum(self, chk):
+        self._checksum = chk
 
     # ===== METHODS ======
 
@@ -66,6 +74,7 @@ class DAQModel(object):
         header = []
         channels = []
 
+        checksum = utils.get_md5_checksum(ini)
         # TODO: this assumes that all DQ channels appear at the end of the file.
         #       Is that guaranteed to be the case?
         while True:
@@ -77,7 +86,7 @@ class DAQModel(object):
                 break
             header.append(line)
 
-        model = cls(name, [], header)
+        model = cls(name, [], header, checksum)
 
         while True:
             channel = daqchannel.DAQChannel.from_ini(model, ini)

@@ -13,6 +13,12 @@ from channeltreemodel import ChannelTreeModel, ComboDelegate
 import channelsets
 import archive
 
+class FileModifiedException(Exception):
+    def __init__(self, model):
+        super(FileModifiedException, self).__init__()
+        self.model = model
+
+
 class MainWindow(QMainWindow):
     ENV_CDS_DAQ_CHANS = 'PYDAQCONFIG_CHAN_DIR'
     ENV_POST_SAVE_CMD = 'PYDAQCONFIG_POST_SAVE_CMD'
@@ -66,7 +72,6 @@ class MainWindow(QMainWindow):
             return None
 
     def load_models_from_files(self):
-        #TODO: automatically load these, based on ENV variable or so
         models = []
         directory = self.get_ini_directory()
         if not directory:
@@ -95,6 +100,9 @@ class MainWindow(QMainWindow):
     def save_model(self, model):
         directory = self.get_ini_directory()
         basename = os.path.join(directory, model.name+'.ini')
+        if utils.get_md5_checksum(basename) != model.checksum:
+            raise FileModifiedException(model)
+
         new_ini = basename + '.new'
         bak_ini = basename + '.bak'
         print 'Saving {0} to {1}...'.format(model.name, basename) ,
@@ -103,6 +111,7 @@ class MainWindow(QMainWindow):
             shutil.copy(basename, bak_ini)
             shutil.move(new_ini, basename)
             print 'done.'
+        model.checksum = utils.get_md5_checksum(basename)
         return basename
 
     def has_changes(self):
@@ -188,10 +197,18 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def on_btnSave_clicked(self):
         updated_files = []
+        failed_models = []
         for model in self._models:
             if self._models_changed[model.name]:
-                updated_files.append(self.save_model(model))
-                self._models_changed[model.name] = False
+                try:
+                    updated_files.append(self.save_model(model))
+                    self._models_changed[model.name] = False
+                except FileModifiedException as e:
+                    failed_models.append(model.name)
+        if failed_models:
+            QMessageBox.warning(self, 'Modified Files Detected',
+                'The following models were not saved, as the channel files were '
+                'modified in the meantime: {0}.'.format(', '.join(failed_models)))
         if updated_files:
             if self.launch_post_save_cmd(updated_files):
                 QMessageBox.information(self, 'DAQ Channels Saved',
