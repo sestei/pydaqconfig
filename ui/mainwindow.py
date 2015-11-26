@@ -38,10 +38,9 @@ class MainWindow(QMainWindow):
             self.btnArchive.setEnabled(True)
 
     def launch_post_save_cmd(self, updated_files):
-        env = QProcessEnvironment.systemEnvironment()
         print 'Calling post-save command (in {0})...'.format(self.ENV_POST_SAVE_CMD) ,
-        if env.contains(self.ENV_POST_SAVE_CMD):
-            cmd = str(env.value(self.ENV_POST_SAVE_CMD))
+        cmd = utils.get_env_variable(self.ENV_POST_SAVE_CMD)
+        if cmd:
             #TODO: maybe use check_output() and then display a log window
             try:
                 subprocess.check_call([cmd]+updated_files)
@@ -60,9 +59,8 @@ class MainWindow(QMainWindow):
 
     def get_ini_directory(self):
         models = []
-        env = QProcessEnvironment.systemEnvironment()
-        if env.contains(self.ENV_CDS_DAQ_CHANS):
-            directory = str(env.value(self.ENV_CDS_DAQ_CHANS))
+        directory = utils.get_env_variable(self.ENV_CDS_DAQ_CHANS)
+        if directory:
             return os.path.abspath(os.path.expanduser(directory))
         else:
             return None
