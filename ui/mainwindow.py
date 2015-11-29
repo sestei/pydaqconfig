@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.twChannels.expanded.connect(self.resize_columns)
         self.load_models()
 
-        datarates = [2**n for n in range(4,17)]
+        datarates = [2**n for n in [4,8,9,10,11,12,13,14,15,16]]
         d_datarates = zip(map(str, datarates), datarates)
         self.twChannels.setItemDelegateForColumn(2, ComboDelegate(d_datarates, self.twChannels))
         self.twChannels.model().dataChanged.connect(self.data_changed)
