@@ -83,6 +83,8 @@ class ModelNode(TreeNode):
             elif column == 3:
                 # total model acquisition rate in MiB/h
                 return '{0:.1f}'.format(round(self.model.get_acquisition_rate() / 1048576.0 * 3600,1))
+        elif role == Qt.SizeHintRole and column==2:
+            return QSize(50,24)
         return None
 
     def setData(self, column, value, role):
