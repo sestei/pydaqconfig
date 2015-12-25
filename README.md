@@ -12,6 +12,7 @@ A Python package and GUI for activating DAQ channels in the Glasgow CDS system.
 - allow a post-save command, which e.g. can commit the changed file to a repository
 - quick acquisition of multiple channels via channel sets
 - allows browsing of old files/old versions in the repository
+- checks DAQ files for modifications before saving
 
 Prerequisites
 -------------
